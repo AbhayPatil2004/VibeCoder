@@ -5,10 +5,15 @@ import { defineConfig } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
+
+  engineType: "binary", // ✅ REQUIRED for MongoDB (fixes the error)
+
   migrations: {
     path: "prisma/migrations",
   },
+
   datasource: {
     url: process.env["DATABASE_URL"],
   },
 });
+

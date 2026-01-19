@@ -1,46 +1,48 @@
-"use server"
+"use server";
 
-import { auth } from "../../../auth.js"
+import { auth } from "@/auth";
+import connectToDatabase from "@/lib/db";
+import User from "@/models/User";
+import Account from "@/models/Account";
 
-import { db } from "../../../lib/db.js"
-
-
-
+/**
+ * Get user by ID (with accounts populated)
+ */
 export const getUserById = async (id) => {
-    try {
-        const user = await db.user.findUnique({
-            where: { id },
-            include: {
-                accounts: true
-            }
-        })
+  try {
+    await connectToDatabase();
 
-        return user
-    }
-    catch (error) {
-        console.log(error)
-        return null
-    }
-}
+    const user = await User.findById(id)
+      .populate("accounts") // replaces `include: { accounts: true }`
+      .lean();
 
+    return user;
+  } catch (error) {
+    console.error("getUserById error:", error);
+    return null;
+  }
+};
+
+/**
+ * Get account by userId
+ */
 export const getAccountByUserId = async (userId) => {
+  try {
+    await connectToDatabase();
 
-    try {
-        const account = await db.account.findFirst({
-            where : {
-                userId
-            }
-        })
+    const account = await Account.findOne({ userId }).lean();
 
-        return account
-    }   
-    catch (error) {
-        console.log(error)
-        return null
-    }
-}
+    return account;
+  } catch (error) {
+    console.error("getAccountByUserId error:", error);
+    return null;
+  }
+};
 
-export const currentUser = async() => {
-    const user = await auth()
-    return user?.user 
-}
+/**
+ * Get current authenticated user (NextAuth)
+ */
+export const currentUser = async () => {
+  const session = await auth();
+  return session?.user || null;
+};

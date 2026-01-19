@@ -1,13 +1,13 @@
 import Image from "next/image";
 import { Button  } from "@/components/ui/button";
-import {db} from '@/lib/db'
+// import {db} from '@/lib/db'
 
 export default async function Home() {
 
-  const user = db.user
+  // const user = db.user
   return (
     <div>
-      <div>{user}</div>
+      {/* <div>{user}</div> */}
       <Button>
         Get Started
       </Button>

@@ -1,108 +1,107 @@
+export const runtime = "nodejs";
+
 import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-
 import authConfig from "./auth.config.js";
-import { db } from "./lib/db.js";
-import { getAccountByUserId, getUserById } from "./modules/auth/actions.js";
 
+import connectToDatabase from "@/lib/db";
+import User from "@/models/User";
+import Account from "@/models/Account";
+
+import {
+  getAccountByUserId,
+  getUserById,
+} from "@/modules/auth/actions";
+
+/**
+ * NextAuth with Mongoose (NO PrismaAdapter)
+ */
 export const { auth, handlers, signIn, signOut } = NextAuth({
+  session: { strategy: "jwt" },
+  secret: process.env.AUTH_SECRET,
+
   callbacks: {
     /**
-     * Handle user creation and account linking after a successful sign-in
+     * Runs on OAuth sign-in (Google, GitHub, etc.)
      */
     async signIn({ user, account }) {
-      if (!user || !account || !user.email) return false;
+  try {
+    if (!account) return false;
 
-      // Check if the user already exists
-      const existingUser = await db.user.findUnique({
-        where: { email: user.email },
+    await connectToDatabase();
+
+    // 🔑 GitHub may not return email
+    const email =
+      user.email ??
+      `${user.id}@${account.provider}.oauth`;
+
+    // 1️⃣ Find or create user
+    let existingUser = await User.findOne({ email });
+
+    if (!existingUser) {
+      existingUser = await User.create({
+        email,
+        name: user.name || null,
+        image: user.image || null,
       });
+    }
 
-      // If user does not exist, create a new one
-      if (!existingUser) {
-        const newUser = await db.user.create({
-          data: {
-            email: user.email,
-            name: user.name ?? null,
-            image: user.image ?? null,
-            accounts: {
-              create: {
-                type: account.type,
-                provider: account.provider,
-                providerAccountId: account.providerAccountId,
-                refreshToken: account.refresh_token ?? null,
-                accessToken: account.access_token ?? null,
-                expiresAt: account.expires_at ?? null,
-                tokenType: account.token_type ?? null,
-                scope: account.scope ?? null,
-                idToken: account.id_token ?? null,
-                sessionState: account.session_state ?? null,
-              },
-            },
-          },
-        });
+    // 2️⃣ Find or create account
+    const existingAccount = await Account.findOne({
+      provider: account.provider,
+      providerAccountId: account.providerAccountId,
+    });
 
-        if (!newUser) return false;
-      } else {
-        // Link account if it does not exist
-        const existingAccount = await db.account.findUnique({
-          where: {
-            provider_providerAccountId: {
-              provider: account.provider,
-              providerAccountId: account.providerAccountId,
-            },
-          },
-        });
+    if (!existingAccount) {
+      await Account.create({
+        userId: existingUser._id,
+        type: account.type,
+        provider: account.provider,
+        providerAccountId: account.providerAccountId,
+        refreshToken: account.refresh_token ?? null,
+        accessToken: account.access_token ?? null,
+        expiresAt: account.expires_at ?? null,
+        tokenType: account.token_type ?? null,
+        scope: account.scope ?? null,
+        idToken: account.id_token ?? null,
+        sessionState: account.session_state ?? null,
+      });
+    }
 
-        if (!existingAccount) {
-          await db.account.create({
-            data: {
-              userId: existingUser.id,
-              type: account.type,
-              provider: account.provider,
-              providerAccountId: account.providerAccountId,
-              refreshToken: account.refresh_token ?? null,
-              accessToken: account.access_token ?? null,
-              expiresAt: account.expires_at ?? null,
-              tokenType: account.token_type ?? null,
-              scope: account.scope ?? null,
-              idToken: account.id_token ?? null,
-              sessionState: account.session_state ?? null,
-            },
-          });
-        }
-      }
+    return true; // ✅ IMPORTANT
+  } catch (error) {
+    console.error("SIGN IN ERROR:", error);
+    return false;
+  }
+}
+,
 
-      return true;
-    },
-
+    /**
+     * JWT callback
+     */
     async jwt({ token }) {
       if (!token.sub) return token;
 
-      const existingUser = await getUserById(token.sub);
-      if (!existingUser) return token;
+      const user = await getUserById(token.sub);
+      if (!user) return token;
 
-      const existingAccount = await getAccountByUserId(existingUser.id);
-
-      token.name = existingUser.name;
-      token.email = existingUser.email;
-      token.role = existingUser.role;
+      token.name = user.name;
+      token.email = user.email;
+      token.role = user.role;
 
       return token;
     },
 
+    /**
+     * Session callback
+     */
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
         session.user.role = token.role;
       }
-
       return session;
     },
   },
 
-  secret: process.env.AUTH_SECRET,
-  adapter: PrismaAdapter(db),
-  session: { strategy: "jwt" },
   ...authConfig,
 });
