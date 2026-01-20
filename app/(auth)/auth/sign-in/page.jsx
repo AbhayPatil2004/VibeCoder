@@ -2,7 +2,8 @@
 
 import React from 'react'
 import Image from 'next/image'
-import SignInFormClient from '../../../../modules/components/sign-in-form-client'
+// import SignInFormClient from '../../../../modules/components/sign-in-form-client'
+import SignInFormClient from '@/modules/auth/components/sign-in-form-client'
 
 function Page() {
   return (

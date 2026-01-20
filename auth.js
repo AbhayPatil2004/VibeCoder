@@ -9,7 +9,7 @@ import Account from "@/models/Account";
 
 import {
   getAccountByUserId,
-  getUserById,
+  getUserByAuthId
 } from "@/modules/auth/actions";
 
 /**
@@ -24,56 +24,56 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
      * Runs on OAuth sign-in (Google, GitHub, etc.)
      */
     async signIn({ user, account }) {
-  try {
-    if (!account) return false;
+      try {
+        if (!account) return false;
 
-    await connectToDatabase();
+        await connectToDatabase();
 
-    // 🔑 GitHub may not return email
-    const email =
-      user.email ??
-      `${user.id}@${account.provider}.oauth`;
+        // 🔑 GitHub may not return email
+        const email =
+          user.email ??
+          `${user.id}@${account.provider}.oauth`;
 
-    // 1️⃣ Find or create user
-    let existingUser = await User.findOne({ email });
+        // 1️⃣ Find or create user
+        let existingUser = await User.findOne({ email });
 
-    if (!existingUser) {
-      existingUser = await User.create({
-        email,
-        name: user.name || null,
-        image: user.image || null,
-      });
+        if (!existingUser) {
+          existingUser = await User.create({
+            email,
+            name: user.name || null,
+            image: user.image || null,
+          });
+        }
+
+        // 2️⃣ Find or create account
+        const existingAccount = await Account.findOne({
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+        });
+
+        if (!existingAccount) {
+          await Account.create({
+            userId: existingUser._id,
+            type: account.type,
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+            refreshToken: account.refresh_token ?? null,
+            accessToken: account.access_token ?? null,
+            expiresAt: account.expires_at ?? null,
+            tokenType: account.token_type ?? null,
+            scope: account.scope ?? null,
+            idToken: account.id_token ?? null,
+            sessionState: account.session_state ?? null,
+          });
+        }
+
+        return true; // ✅ IMPORTANT
+      } catch (error) {
+        console.error("SIGN IN ERROR:", error);
+        return false;
+      }
     }
-
-    // 2️⃣ Find or create account
-    const existingAccount = await Account.findOne({
-      provider: account.provider,
-      providerAccountId: account.providerAccountId,
-    });
-
-    if (!existingAccount) {
-      await Account.create({
-        userId: existingUser._id,
-        type: account.type,
-        provider: account.provider,
-        providerAccountId: account.providerAccountId,
-        refreshToken: account.refresh_token ?? null,
-        accessToken: account.access_token ?? null,
-        expiresAt: account.expires_at ?? null,
-        tokenType: account.token_type ?? null,
-        scope: account.scope ?? null,
-        idToken: account.id_token ?? null,
-        sessionState: account.session_state ?? null,
-      });
-    }
-
-    return true; // ✅ IMPORTANT
-  } catch (error) {
-    console.error("SIGN IN ERROR:", error);
-    return false;
-  }
-}
-,
+    ,
 
     /**
      * JWT callback
@@ -81,12 +81,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     async jwt({ token }) {
       if (!token.sub) return token;
 
-      const user = await getUserById(token.sub);
-      if (!user) return token;
+      const dbUser = await getUserByAuthId(token.sub);
 
-      token.name = user.name;
-      token.email = user.email;
-      token.role = user.role;
+      if (dbUser) {
+        token.role = dbUser.role;
+      }
 
       return token;
     },

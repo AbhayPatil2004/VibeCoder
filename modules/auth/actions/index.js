@@ -6,33 +6,33 @@ import User from "@/models/User";
 import Account from "@/models/Account";
 
 /**
- * Get user by ID (with accounts populated)
+ * ✅ Get user by NextAuth UUID (authUserId)
  */
-export const getUserById = async (id) => {
+export const getUserByAuthId = async (authUserId) => {
   try {
+    if (!authUserId) return null;
+
     await connectToDatabase();
 
-    const user = await User.findById(id)
-      .populate("accounts") // replaces `include: { accounts: true }`
+    return await User.findOne({ authUserId })
+      .populate("accounts")
       .lean();
-
-    return user;
   } catch (error) {
-    console.error("getUserById error:", error);
+    console.error("getUserByAuthId error:", error);
     return null;
   }
 };
 
 /**
- * Get account by userId
+ * ✅ Get account by Mongo user ObjectId
  */
-export const getAccountByUserId = async (userId) => {
+export const getAccountByUserId = async (userObjectId) => {
   try {
+    if (!userObjectId) return null;
+
     await connectToDatabase();
 
-    const account = await Account.findOne({ userId }).lean();
-
-    return account;
+    return await Account.findOne({ userId: userObjectId }).lean();
   } catch (error) {
     console.error("getAccountByUserId error:", error);
     return null;
@@ -40,7 +40,7 @@ export const getAccountByUserId = async (userId) => {
 };
 
 /**
- * Get current authenticated user (NextAuth)
+ * ✅ Get current authenticated user (NextAuth session)
  */
 export const currentUser = async () => {
   const session = await auth();

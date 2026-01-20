@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Button  } from "@/components/ui/button";
+import UserButton from '@/modules/auth/components/user-button'
 // import {db} from '@/lib/db'
 
 export default async function Home() {
@@ -11,6 +12,7 @@ export default async function Home() {
       <Button>
         Get Started
       </Button>
+      <UserButton></UserButton>
     </div>
   );
 }
