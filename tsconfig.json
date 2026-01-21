@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/layout.jsx", "modules/components/logout-button.jsx", "modules/auth/hooks/use-current-user.js", "modules/auth/actions/index.js", "lib/db.js"  ],
   "exclude": ["node_modules"]
 }

@@ -21,6 +21,12 @@ const userSchema = new Schema(
       enum: ["ADMIN", "USER", "PREMIUM_USER"],
       default: "USER",
     },
+     playgrounds: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Playground",
+      },
+    ],
 
     // Mongo ObjectId references
     accounts: [{ type: Schema.Types.ObjectId, ref: "Account" }],
