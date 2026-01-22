@@ -21,7 +21,7 @@ const userSchema = new Schema(
       enum: ["ADMIN", "USER", "PREMIUM_USER"],
       default: "USER",
     },
-     playgrounds: [
+    playgrounds: [
       {
         type: Schema.Types.ObjectId,
         ref: "Playground",
