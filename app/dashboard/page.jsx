@@ -1,9 +1,12 @@
+// "use client"
+
 import React from 'react'
 import AddNewButton from '../../modules/dashboard/components/add-new'
 import AddRepo from '../../modules/dashboard/components/add-repo'
-import { getAllPlayground } from '../../modules/dashboard/actions/index.js'
+import { getAllPlayground ,deleteProjectById , editProjectById , duplicateProjectById , createPlayground } from '../../modules/dashboard/actions/index.js'
 import EmptyState from "@/modules/dashboard/components/empty-state";
 import ProjectTable from "../../modules/dashboard/components/project-tabel.jsx";
+
 
 async function DashboardPage() {
 
@@ -23,9 +26,9 @@ async function DashboardPage() {
                 ) : (
                     <ProjectTable
                         projects={playgrounds || []}
-                        onDeleteProject={()=>{}}
-                        onUpdateProject={()=>{}}
-                        onDuplicateProject={()=>{}}
+                        onDeleteProject={ deleteProjectById }
+                        onUpdateProject={ editProjectById }
+                        onDuplicateProject={ duplicateProjectById }
                     />
                 )}
             </div>

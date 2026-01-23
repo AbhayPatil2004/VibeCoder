@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react"
 import { toast } from "sonner";
 import TemplateSelectingModal from "./template-selection-model";
-// import { createPlayground } from "../actions";
+import { createPlayground } from "../actions/index.js";
 
 const AddNewButton = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);

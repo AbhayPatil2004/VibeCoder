@@ -1,28 +1,31 @@
-import mongoose, { model, models } from 'mongoose'
+import mongoose, { Schema, model, models } from "mongoose";
 
-const playgroundSchema = new mongoose.Schema({
-
-    title : {
-        type : String ,
-        required: true,
+const playgroundSchema = new Schema(
+  {
+    title: {
+      type: String,
+      required: true,
     },
-    description : {
-        type : String 
-    },
-    template : {
-        type : String ,
-        enum: ["REACT", "NEXTJS", "EXPRESS", "VUE", "HONO", "ANGULAR"],
-        default : "REACT"
-    },
-    userId : {
-        type : mongoose.Schema.Types.ObjectId ,
-        ref : "User",
-        required : true
-    }
-} , {
-    timestamps : true 
-})
 
-const Playground = models.Playground || model("Playground" , playgroundSchema )
+    description: String,
 
-export default Playground
+    template: {
+      type: String,
+      enum: ["REACT", "NEXTJS", "EXPRESS", "VUE", "HONO", "ANGULAR"],
+      default: "REACT",
+    },
+
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+  },
+  { timestamps: true }
+);
+
+const Playground =
+  models.Playground || model("Playground", playgroundSchema);
+
+export default Playground;

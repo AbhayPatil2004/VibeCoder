@@ -52,7 +52,7 @@ import {
   Eye,
 } from "lucide-react";
 import { toast } from "sonner";
-// import { MarkedToggleButton } from "./marked-toggle";
+import { MarkedToggleButton } from "./marked-toggle";
 
 export default function ProjectTable({
   projects,

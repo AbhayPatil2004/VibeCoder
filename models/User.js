@@ -1,10 +1,8 @@
-import mongoose from "mongoose";
-
-const { Schema, model, models } = mongoose;
+import mongoose, { Schema, model, models } from "mongoose";
 
 const userSchema = new Schema(
   {
-    // 🔑 NextAuth UUID (token.sub / user.id)
+    // 🔑 NextAuth user id (token.sub)
     authUserId: {
       type: String,
       required: true,
@@ -12,7 +10,13 @@ const userSchema = new Schema(
       index: true,
     },
 
-    email: { type: String, required: true, unique: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
     name: String,
     image: String,
 
@@ -21,15 +25,6 @@ const userSchema = new Schema(
       enum: ["ADMIN", "USER", "PREMIUM_USER"],
       default: "USER",
     },
-    playgrounds: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Playground",
-      },
-    ],
-
-    // Mongo ObjectId references
-    accounts: [{ type: Schema.Types.ObjectId, ref: "Account" }],
   },
   { timestamps: true }
 );

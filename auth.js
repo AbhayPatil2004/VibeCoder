@@ -39,11 +39,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
         if (!existingUser) {
           existingUser = await User.create({
+            authUserId: user.id, // ✅ VERY IMPORTANT
             email,
             name: user.name || null,
             image: user.image || null,
           });
         }
+
 
         // 2️⃣ Find or create account
         const existingAccount = await Account.findOne({
