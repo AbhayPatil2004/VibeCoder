@@ -235,6 +235,78 @@ export default function ProjectTable({
             ))}
           </TableBody>
         </Table>
+
+        {/* EDIT DIALOG */}
+<Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Edit Project</DialogTitle>
+      <DialogDescription>
+        Update your project details
+      </DialogDescription>
+    </DialogHeader>
+
+    <div className="space-y-4">
+      <div>
+        <Label>Title</Label>
+        <Input
+          value={editData.title}
+          onChange={(e) =>
+            setEditData({ ...editData, title: e.target.value })
+          }
+        />
+      </div>
+
+      <div>
+        <Label>Description</Label>
+        <Textarea
+          value={editData.description}
+          onChange={(e) =>
+            setEditData({ ...editData, description: e.target.value })
+          }
+        />
+      </div>
+    </div>
+
+    <DialogFooter>
+      <Button
+        onClick={handleUpdateProject}
+        disabled={isLoading}
+      >
+        {isLoading ? "Updating..." : "Update"}
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
+{/* DELETE DIALOG */}
+<AlertDialog
+  open={deleteDialogOpen}
+  onOpenChange={setDeleteDialogOpen}
+>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>
+        Delete Project?
+      </AlertDialogTitle>
+      <AlertDialogDescription>
+        This action cannot be undone.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction
+        onClick={handleDeleteProject}
+        disabled={isLoading}
+        className="bg-destructive"
+      >
+        {isLoading ? "Deleting..." : "Delete"}
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+
       </div>
     </>
   );
