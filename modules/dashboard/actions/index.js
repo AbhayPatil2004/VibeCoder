@@ -5,6 +5,14 @@ import connectToDatabase from "@/lib/db";
 import Playground from "@/models/Playground";
 import User from "@/models/User";
 import StarMark from "@/models/starMark.js";
+import {auth } from '@/auth'
+
+import {
+  getAccountByUserId,
+  getUserByAuthId
+} from "@/modules/auth/actions";
+
+import { getUserByEmail } from '@/modules/auth/actions'
 
 /**
  * Get all playgrounds (NO AUTH)
@@ -39,19 +47,52 @@ export const getAllPlayground = async () => {
 /**
  * Create playground (NO AUTH)
  */
+// export const createPlayground = async (data) => {
+//   try {
+//     await connectToDatabase();
+
+//     const playground = await Playground.create({
+//       title: data.title,
+//       description: data.description,
+//       template: data.template,
+//       userId: data.userId || null, // optional
+//     });
+
+//     revalidatePath("/dashboard");
+//     return playground;
+//   } catch (error) {
+//     console.error("createPlayground error:", error);
+//     throw error;
+//   }
+// };
+
+
 export const createPlayground = async (data) => {
   try {
     await connectToDatabase();
+
+    const session = await auth();
+
+    if (!session?.user?.email) {
+      throw new Error("Unauthorized");
+    }
+
+    const dbUser = await getUserByEmail(session.user.email);
+
+    if (!dbUser?._id) {
+      throw new Error("User not found in DB");
+    }
 
     const playground = await Playground.create({
       title: data.title,
       description: data.description,
       template: data.template,
-      userId: data.userId || null, // optional
+      userId: dbUser._id, // ✅ correct ObjectId
     });
 
     revalidatePath("/dashboard");
-    return playground;
+    return JSON.parse(JSON.stringify(playground));
+
   } catch (error) {
     console.error("createPlayground error:", error);
     throw error;

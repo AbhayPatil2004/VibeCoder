@@ -23,6 +23,19 @@ export const getUserByAuthId = async (authUserId) => {
   }
 };
 
+export const getUserByEmail = async (email) => {
+  try {
+    if (!email) return null;
+
+    await connectToDatabase();
+    return await User.findOne({ email }).lean();
+  } catch (error) {
+    console.error("getUserByEmail error:", error);
+    return null;
+  }
+};
+
+
 /**
  * ✅ Get account by Mongo user ObjectId
  */
