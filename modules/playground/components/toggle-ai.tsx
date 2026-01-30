@@ -29,7 +29,6 @@ import { cn } from "@/lib/utils";
 import { AIChatSidePanel } from "@/modules/ai-chat/components/ai-chat-sidebarpanel";
 
 
-
 interface ToggleAIProps {
   isEnabled: boolean;
   onToggle: (value: boolean) => void;
