@@ -1,5 +1,4 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -139,8 +138,10 @@ const MainPlaygroundPage = () => {
     [handleRenameFolder, saveTemplateData]
   );
 
-  const activeFile = openFiles.find((file) => file.id === activeFileId);
-  const hasUnsavedChanges = openFiles.some((file) => file.hasUnsavedChanges);
+  const activeFile = openFiles.find((f) => f.id === activeFileId);
+  const hasUnsavedChanges = openFiles.some((f) => f.hasUnsavedChanges);
+
+  const handleFileSelect = (file) => openFile(file);
 
   const handleSave = useCallback(
     async (fileId) => {
@@ -155,52 +156,28 @@ const MainPlaygroundPage = () => {
 
       try {
         const filePath = findFilePath(fileToSave, latestTemplateData);
-        if (!filePath) return;
-
-        const updatedTemplateData = JSON.parse(
-          JSON.stringify(latestTemplateData)
-        );
-
-        const updateFileContentRec = (items) =>
-          items.map((item) =>
-            item.folderName
-              ? { ...item, items: updateFileContentRec(item.items) }
-              : item.filename === fileToSave.filename &&
-                item.fileExtension === fileToSave.fileExtension
-              ? { ...item, content: fileToSave.content }
-              : item
-          );
-
-        updatedTemplateData.items = updateFileContentRec(
-          updatedTemplateData.items
-        );
+        if (!filePath) {
+          toast.error("File path not found");
+          return;
+        }
 
         if (writeFileSync) {
           await writeFileSync(filePath, fileToSave.content);
           lastSyncedContent.current.set(fileToSave.id, fileToSave.content);
-          if (instance?.fs) {
-            await instance.fs.writeFile(filePath, fileToSave.content);
-          }
         }
 
-        await saveTemplateData(updatedTemplateData);
-        setTemplateData(updatedTemplateData);
+        const newTemplateData = await saveTemplateData(latestTemplateData);
+        setTemplateData(newTemplateData || latestTemplateData);
 
         setOpenFiles(
           openFiles.map((f) =>
             f.id === targetFileId
-              ? {
-                  ...f,
-                  originalContent: f.content,
-                  hasUnsavedChanges: false,
-                }
+              ? { ...f, hasUnsavedChanges: false }
               : f
           )
         );
 
-        toast.success(
-          `Saved ${fileToSave.filename}.${fileToSave.fileExtension}`
-        );
+        toast.success(`Saved ${fileToSave.filename}`);
       } catch (err) {
         console.error(err);
         toast.error("Failed to save file");
@@ -210,17 +187,27 @@ const MainPlaygroundPage = () => {
       activeFileId,
       openFiles,
       writeFileSync,
-      instance,
       saveTemplateData,
       setTemplateData,
       setOpenFiles,
     ]
   );
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.key === "s") {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSave]);
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <AlertCircle className="h-12 w-12 text-red-500" />
         <p>{error}</p>
       </div>
     );
@@ -233,31 +220,58 @@ const MainPlaygroundPage = () => {
   if (!templateData) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <FolderOpen className="h-12 w-12 text-amber-500 mb-4" />
-        <Button onClick={() => window.location.reload()}>Reload</Button>
+        <FolderOpen className="h-12 w-12 text-yellow-500" />
+        <p>No template data</p>
       </div>
     );
   }
 
   return (
     <TooltipProvider>
-      <>
-        <TemplateFileTree
-          data={templateData}
-          onFileSelect={(file) => openFile(file)}
-          selectedFile={activeFile}
-          onAddFile={wrappedHandleAddFile}
-          onAddFolder={wrappedHandleAddFolder}
-          onDeleteFile={wrappedHandleDeleteFile}
-          onDeleteFolder={wrappedHandleDeleteFolder}
-          onRenameFile={wrappedHandleRenameFile}
-          onRenameFolder={wrappedHandleRenameFolder}
+      <TemplateFileTree
+        data={templateData}
+        onFileSelect={handleFileSelect}
+        selectedFile={activeFile}
+        onAddFile={wrappedHandleAddFile}
+        onAddFolder={wrappedHandleAddFolder}
+        onDeleteFile={wrappedHandleDeleteFile}
+        onDeleteFolder={wrappedHandleDeleteFolder}
+        onRenameFile={wrappedHandleRenameFile}
+        onRenameFolder={wrappedHandleRenameFolder}
+      />
+
+      <SidebarInset>
+        <header className="flex h-16 items-center border-b px-4">
+          <SidebarTrigger />
+          <Separator orientation="vertical" className="mx-2 h-4" />
+          <Button onClick={() => handleSave()} disabled={!hasUnsavedChanges}>
+            <Save className="h-4 w-4" />
+          </Button>
+        </header>
+
+        <PlaygroundEditor
+          activeFile={activeFile}
+          content={activeFile?.content || ""}
+          onContentChange={(value) =>
+            activeFileId && updateFileContent(activeFileId, value)
+          }
+          suggestion={aiSuggestions.suggestion}
+          suggestionLoading={aiSuggestions.isLoading}
+          onAcceptSuggestion={aiSuggestions.acceptSuggestion}
+          onRejectSuggestion={aiSuggestions.rejectSuggestion}
         />
 
-        <SidebarInset>
-          {/* UI unchanged */}
-        </SidebarInset>
-      </>
+        {isPreviewVisible && (
+          <WebContainerPreview
+            templateData={templateData}
+            instance={instance}
+            writeFileSync={writeFileSync}
+            isLoading={containerLoading}
+            error={containerError}
+            serverUrl={serverUrl}
+          />
+        )}
+      </SidebarInset>
     </TooltipProvider>
   );
 };
