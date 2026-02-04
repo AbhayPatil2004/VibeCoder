@@ -8,14 +8,8 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { Terminal } from "xterm";
-import { FitAddon } from "xterm-addon-fit";
-import { WebLinksAddon } from "xterm-addon-web-links";
-import { SearchAddon } from "xterm-addon-search";
+
 import "xterm/css/xterm.css";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Copy, Trash2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TerminalComponent = forwardRef(
@@ -32,10 +26,6 @@ const TerminalComponent = forwardRef(
     const term = useRef(null);
     const fitAddon = useRef(null);
     const searchAddon = useRef(null);
-
-    const [isConnected, setIsConnected] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [showSearch, setShowSearch] = useState(false);
 
     const currentLine = useRef("");
     const cursorPosition = useRef(0);
@@ -60,11 +50,10 @@ const TerminalComponent = forwardRef(
     };
 
     const writePrompt = useCallback(() => {
-      if (term.current) {
-        term.current.write("\r\n$ ");
-        currentLine.current = "";
-        cursorPosition.current = 0;
-      }
+      if (!term.current) return;
+      term.current.write("\r\n$ ");
+      currentLine.current = "";
+      cursorPosition.current = 0;
     }, []);
 
     useImperativeHandle(ref, () => ({
@@ -162,8 +151,14 @@ const TerminalComponent = forwardRef(
       [executeCommand]
     );
 
-    const initializeTerminal = useCallback(() => {
+    const initializeTerminal = useCallback(async () => {
       if (!terminalRef.current || term.current) return;
+
+      // 🔥 dynamic imports (SSR safe)
+      const { Terminal } = await import("xterm");
+      const { FitAddon } = await import("xterm-addon-fit");
+      const { WebLinksAddon } = await import("xterm-addon-web-links");
+      const { SearchAddon } = await import("xterm-addon-search");
 
       const terminal = new Terminal({
         cursorBlink: true,
@@ -194,8 +189,9 @@ const TerminalComponent = forwardRef(
     }, [theme, handleTerminalInput, writePrompt]);
 
     const clearTerminal = useCallback(() => {
-      term.current?.clear();
-      term.current?.writeln("🚀 WebContainer Terminal");
+      if (!term.current) return;
+      term.current.clear();
+      term.current.writeln("🚀 WebContainer Terminal");
       writePrompt();
     }, [writePrompt]);
 

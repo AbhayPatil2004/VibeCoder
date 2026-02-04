@@ -1,5 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
+// import "server-only";
+"use server"
+
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Scans a template directory and returns a structured JSON representation

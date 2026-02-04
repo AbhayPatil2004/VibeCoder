@@ -1,31 +1,14 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Tooltip,
-  TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import LoadingStep from "@/modules/playground/components/loader";
 import { PlaygroundEditor } from "@/modules/playground/components/playground-editor";
 import { TemplateFileTree } from "@/modules/playground/components/playground-explorer";
-import ToggleAI from "@/modules/playground/components/toggle-ai";
-import { useAISuggestions } from "@/modules/playground/hooks/useAISuggestion";
 import { useFileExplorer } from "@/modules/playground/hooks/useFileExplorer";
 import { usePlayground } from "@/modules/playground/hooks/usePlayground";
 import { findFilePath } from "@/modules/playground/lib";
@@ -33,11 +16,8 @@ import WebContainerPreview from "@/modules/webcontainers/components/webcontainer
 import { useWebContainer } from "@/modules/webcontainers/hooks/useWebContainer";
 import {
   AlertCircle,
-  FileText,
   FolderOpen,
   Save,
-  Settings,
-  X,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import React, {
@@ -52,19 +32,14 @@ const MainPlaygroundPage = () => {
   const { id } = useParams();
   const [isPreviewVisible, setIsPreviewVisible] = useState(true);
 
-  const { playgroundData, templateData, isLoading, error, saveTemplateData } =
+  const { templateData, isLoading, error, saveTemplateData } =
     usePlayground(id);
-
-  const aiSuggestions = useAISuggestions();
 
   const {
     setTemplateData,
-    setActiveFileId,
     setPlaygroundId,
     setOpenFiles,
     activeFileId,
-    closeAllFiles,
-    closeFile,
     openFile,
     openFiles,
     handleAddFile,
@@ -98,7 +73,13 @@ const MainPlaygroundPage = () => {
 
   const wrappedHandleAddFile = useCallback(
     (newFile, parentPath) =>
-      handleAddFile(newFile, parentPath, writeFileSync, instance, saveTemplateData),
+      handleAddFile(
+        newFile,
+        parentPath,
+        writeFileSync,
+        instance,
+        saveTemplateData
+      ),
     [handleAddFile, writeFileSync, instance, saveTemplateData]
   );
 
@@ -195,11 +176,12 @@ const MainPlaygroundPage = () => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.ctrlKey && e.key === "s") {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
         handleSave();
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleSave]);
@@ -213,9 +195,7 @@ const MainPlaygroundPage = () => {
     );
   }
 
-  if (isLoading) {
-    return <LoadingStep />;
-  }
+  if (isLoading) return <LoadingStep />;
 
   if (!templateData) {
     return (
@@ -255,10 +235,6 @@ const MainPlaygroundPage = () => {
           onContentChange={(value) =>
             activeFileId && updateFileContent(activeFileId, value)
           }
-          suggestion={aiSuggestions.suggestion}
-          suggestionLoading={aiSuggestions.isLoading}
-          onAcceptSuggestion={aiSuggestions.acceptSuggestion}
-          onRejectSuggestion={aiSuggestions.rejectSuggestion}
         />
 
         {isPreviewVisible && (
