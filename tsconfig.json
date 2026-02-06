@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
 , "app/layout.jsx", "modules/components/logout-button.jsx", "modules/auth/hooks/use-current-user.js", "modules/auth/actions/index.js", "lib/db.js", "modules/playground/components/playground-editor.jsx"  ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules" , "vibecode-starters"]
 }
