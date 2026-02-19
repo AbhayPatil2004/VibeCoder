@@ -87,7 +87,7 @@ export const createPlayground = async (data) => {
       title: data.title,
       description: data.description,
       template: data.template,
-      userId: dbUser.id, // ✅ correct ObjectId
+      userId: dbUser._id, // ✅ correct ObjectId
     });
 
     revalidatePath("/dashboard");
