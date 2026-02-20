@@ -25,7 +25,7 @@ const AddNewButton = () => {
 
     )
     setIsModalOpen(false)
-    router.push(`/playground/${res?.id}`)
+    // router.push(`/playground/${res?.id}`)
   }
 
 
